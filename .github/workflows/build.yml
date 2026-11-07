@@ -6,6 +6,11 @@ on:
     tags: ["v*"]
   pull_request:
   workflow_dispatch:
+    inputs:
+      modrinth_version:
+        description: "Publish this build to Modrinth as version (e.g. v1.0.0). Leave blank to just build."
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -14,12 +19,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      RELEASE_VERSION: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || '' }}
+      RELEASE_VERSION: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || inputs.modrinth_version || '' }}
       MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "25"
@@ -42,14 +47,14 @@ jobs:
           prerelease: true
 
       - name: Publish to Modrinth (tags only, needs MODRINTH_TOKEN secret)
-        if: startsWith(github.ref, 'refs/tags/v') && env.MODRINTH_TOKEN != ''
+        if: (startsWith(github.ref, 'refs/tags/v') || inputs.modrinth_version != '') && env.MODRINTH_TOKEN != ''
         uses: Kir-Antipov/mc-publish@v3.3
         with:
-          modrinth-id: paper-waystones
+          modrinth-id: 16iFCfUA
           modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
           files: build/libs/*.jar
-          name: Paper Waystones ${{ github.ref_name }}
-          version: ${{ github.ref_name }}
+          name: Paper Waystones ${{ env.RELEASE_VERSION }}
+          version: ${{ env.RELEASE_VERSION }}
           version-type: beta
           loaders: |
             paper
