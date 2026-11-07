@@ -1,0 +1,86 @@
+# ─────────────────────────────────────────────
+#  Waystones (server-side) — configuration
+# ─────────────────────────────────────────────
+
+rules:
+  # ACTIVATION = players must right-click a waystone to unlock it
+  # TEAM       = available to everyone on the owner's scoreboard team
+  # GLOBAL     = available to everyone
+  default-visibility: ACTIVATION
+  # Let anyone (not just ops) rename / edit global waystones
+  allow-everyone-to-manage-global: false
+  # Only the owner (or players with waystones.break.any) can break a waystone
+  owner-only-break: true
+
+costs:
+  enable-xp-costs: true
+  # XP *points* charged per block travelled when warping FROM a waystone or a warp stone
+  xp-per-block: 0.01
+  min-xp-cost: 0
+  max-xp-cost: 27
+  # Flat cost when changing dimension
+  interdimensional-xp-cost: 27
+
+durability:
+  enable: true
+  # Warp stone max durability and how much each warp uses
+  warp-stone-max-durability: 400
+  warp-stone-damage-per-use: 80
+
+cooldowns:
+  enable: true
+  # Seconds. 0 = no cooldown.
+  waystone: 0
+  warp-stone: 0
+  inventory-button: 300
+  scrolls: 0
+
+warp:
+  # Ticks you must hold still while a scroll / warp stone charges (20 = 1 second)
+  item-charge-ticks: 32
+  # ENABLED / SAME_DIMENSION / DISABLED
+  transport-pets: DISABLED
+  transport-leashed: ENABLED
+  # Entity types that are never teleported (pets, leashed, warp plates, portals)
+  entity-deny-list: [WITHER, ENDER_DRAGON]
+  enable-modifiers: true
+  # Ticks an entity must stand on a warp plate before it fires
+  warp-plate-delay-ticks: 40
+  # Minutes a portal-scroll portal stays open
+  portal-lifetime-minutes: 5
+
+inventory-button:
+  # The /waystone command (there is no way for a server plugin to add a real button to the
+  # vanilla inventory screen, so this is the equivalent).
+  # none    = disabled
+  # nearest = warp to the nearest activated waystone
+  # any     = open the selection menu
+  # <name>  = warp to the waystone with this exact name
+  mode: any
+
+world-gen:
+  # Approximate chunk distance between wild waystones. 0 = disabled.
+  chunks-between-wild-waystones: 25
+  # DEFAULT, MOSSY, SANDY, BLACKSTONE, DEEPSLATE, END_STONE or BIOME
+  wild-waystone-style: BIOME
+  wild-waystone-worlds: [world, world_nether, world_the_end]
+  # DISABLED, REGULAR (about half of villages) or FREQUENT (most villages)
+  spawn-in-villages: REGULAR
+  # PRESET_FIRST, RANDOM_ONLY, PRESET_ONLY or MIXED
+  name-generation-mode: PRESET_FIRST
+  # Placeholders: {Biome} and {Random}
+  name-generation-template: "{Random}"
+  name-generation-presets: []
+
+resource-pack:
+  enabled: true
+  # The plugin serves the pack itself on this port. Players must be able to reach it.
+  port: 8164
+  # Address players use to reach the server (LAN IP, ZeroTier IP, domain...).
+  # Leave blank to use the server's own IP from server.properties.
+  public-host: ""
+  # Or host the pack somewhere else (e.g. a GitHub release) and put the direct URL here.
+  # If set, the built-in web server is not started.
+  external-url: ""
+  required: true
+  prompt: "This server uses a small resource pack for Waystones."

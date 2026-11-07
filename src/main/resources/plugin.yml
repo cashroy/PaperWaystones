@@ -1,0 +1,25 @@
+name: PaperWaystones
+version: '${version}'
+main: dev.cashroy.waystones.WaystonesPlugin
+api-version: '26.1'
+author: cashroy
+description: Paper Waystones — waystones, sharestones, portstones, warp plates, scrolls and more — server-side, with a custom resource pack.
+commands:
+  waystones:
+    description: Waystones admin commands
+    usage: /waystones help
+    aliases: [ws]
+  waystone:
+    description: The "inventory button" — quick warp from anywhere
+    usage: /waystone
+    aliases: [wsb, warp-home]
+permissions:
+  waystones.admin:
+    description: Use /waystones admin commands, manage any waystone, set global visibility
+    default: op
+  waystones.button:
+    description: Use /waystone (the inventory-button warp)
+    default: true
+  waystones.break.any:
+    description: Break waystones owned by other players
+    default: op
