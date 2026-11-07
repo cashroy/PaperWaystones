@@ -155,10 +155,10 @@ def make_blocks():
     styles = ["stone", "sandy", "mossy", "deepslate", "end_stone", "blackstone", "nether", "purpur", "prismarine", "muddy"]
     colours = ["amethyst", "copper", "diamond", "emerald", "gold", "lapis", "prismarine", "redstone"]
     W, H = 1600, 900
-    img = Image.new("RGBA", (W, H), BG + (255,))
+    img = mc_background(W, H)
     d = ImageDraw.Draw(img)
-    d.text((60, 40), "Paper Waystones", font=font(48, "Bold"), fill=TEXT)
-    d.text((62, 104), "10 waystone styles · 8 sharestones · portstones · warp plates", font=font(24), fill=MUTED)
+    shadow_text(d, (60, 36), "Paper Waystones", pix(54, True), off=4)
+    shadow_text(d, (62, 106), "10 waystone styles - 8 sharestones - portstones - warp plates", pix(22), fill=(200, 200, 200))
 
     def row(models, y, h, labels):
         n = len(models)
@@ -169,8 +169,8 @@ def make_blocks():
             r = r.resize((int(r.width * k), int(r.height * k)), Image.NEAREST)
             cx = 60 + cell * i + cell / 2
             img.alpha_composite(r, (int(cx - r.width / 2), y + h - r.height))
-            tw = d.textlength(lab, font=font(17))
-            d.text((cx - tw / 2, y + h + 10), lab, font=font(17), fill=MUTED)
+            tw = d.textlength(lab, font=pix(17))
+            shadow_text(d, (cx - tw / 2, y + h + 10), lab, pix(17), fill=(230, 230, 230))
 
     names = ["Stone", "Sandy", "Mossy", "Deepslate", "Ender", "Black", "Nether", "Purpur", "Prismarine", "Muddy"]
     row([f"block/waystone_{s}" for s in styles], 170, 260, names)
@@ -179,107 +179,244 @@ def make_blocks():
     img.convert("RGB").save(os.path.join(OUT, "blocks.png"))
 
 
-# ── recipes ────────────────────────────────────────────────────────
+# ── recipes (Minecraft-style GUI, original pixel art) ──────────────
 
-VANILLA = {  # code -> (label, tile colour)
-    "stone_bricks": ("Stone\nBricks", (122, 122, 122)),
-    "style_block": ("Style\nBlock", (150, 140, 120)),
-    "slab": ("Brick\nSlab", (110, 110, 110)),
-    "amethyst": ("Amethyst\nShard", (150, 100, 220)),
-    "ender_pearl": ("Ender\nPearl", (30, 110, 100)),
-    "gold_ingot": ("Gold\nIngot", (230, 180, 40)),
-    "gold_nugget": ("Gold\nNugget", (230, 190, 60)),
-    "paper": ("Paper", (225, 222, 205)),
-    "ink_sac": ("Ink\nSac", (40, 40, 52)),
-    "feather": ("Feather", (220, 220, 230)),
-    "flint": ("Flint", (70, 70, 74)),
-    "deepslate": ("Deep-\nslate", (70, 70, 78)),
-    "material": ("Material*", (90, 200, 190)),
-    "vines": ("Vines\nor Moss", (70, 120, 50)),
+U = 3  # pixels per GUI unit (Minecraft GUIs are drawn on a 1-unit grid)
+GUI_BG = (198, 198, 198)
+GUI_LIGHT = (255, 255, 255)
+GUI_DARK = (85, 85, 85)
+GUI_SLOT = (139, 139, 139)
+GUI_SLOT_DARK = (55, 55, 55)
+GUI_TEXT = (64, 64, 64)
+PIX_DIR = os.path.join(ROOT, "tools", "fonts")
+
+def pix(size, bold=False):
+    return ImageFont.truetype(os.path.join(PIX_DIR, "Silkscreen-700.ttf" if bold else "Silkscreen-400.ttf"), size)
+
+def shadow_text(d, xy, text, f, fill=(255, 255, 255), shadow=(63, 63, 63), off=2):
+    d.text((xy[0] + off, xy[1] + off), text, font=f, fill=shadow)
+    d.text(xy, text, font=f, fill=fill)
+
+def gui_panel(w, h):
+    """A generic bevelled light-grey window, w x h in GUI units."""
+    img = Image.new("RGBA", (w * U, h * U), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    def r(x0, y0, x1, y1, c):
+        d.rectangle((x0 * U, y0 * U, x1 * U - 1, y1 * U - 1), fill=c)
+    r(1, 0, w - 1, h, (0, 0, 0)); r(0, 1, w, h - 1, (0, 0, 0))
+    r(1, 1, w - 1, h - 1, GUI_BG)
+    r(1, 1, w - 2, 3, GUI_LIGHT); r(1, 1, 3, h - 2, GUI_LIGHT)
+    r(3, h - 3, w - 1, h - 1, GUI_DARK); r(w - 3, 3, w - 1, h - 1, GUI_DARK)
+    r(3, 3, w - 3, h - 3, GUI_BG)
+    return img
+
+def gui_slot(img, x, y, size=18):
+    d = ImageDraw.Draw(img)
+    def r(x0, y0, x1, y1, c):
+        d.rectangle(((x + x0) * U, (y + y0) * U, (x + x1) * U - 1, (y + y1) * U - 1), fill=c)
+    r(0, 0, size, size, GUI_SLOT)
+    r(0, 0, size - 1, 1, GUI_SLOT_DARK); r(0, 0, 1, size - 1, GUI_SLOT_DARK)
+    r(1, size - 1, size, size, GUI_LIGHT); r(size - 1, 1, size, size, GUI_LIGHT)
+
+def gui_arrow(img, x, y):
+    d = ImageDraw.Draw(img)
+    rows = ["..............#.......", "..............##......", "..............###.....",
+            "..............####....", "###################...", "####################..",
+            "#####################.", "####################..", "###################...",
+            "..............####....", "..............###.....", "..............##......",
+            "..............#......."]
+    for j, row in enumerate(rows):
+        for i, ch in enumerate(row):
+            if ch == "#":
+                d.rectangle(((x + i) * U, (y + j + 1) * U, (x + i + 1) * U - 1, (y + j + 2) * U - 1), fill=GUI_SLOT)
+
+# Original 16x16 ingredient sprites (drawn for this project, not taken from the game).
+SPRITES = {
+    "amethyst": (["................", "..........L.....", ".........LlL....", "........LlmmL...",
+                  ".......Lllmmd...", "......Llmmmd....", ".....Llmmmd.....", "....Llmmmd......",
+                  "...Llmmmd.......", "...Lmmmd........", "..Lmmdd.........", "..Lmd...........",
+                  "..dd............", "................", "................", "................"],
+                 {"L": (225, 195, 255), "l": (200, 160, 250), "m": (160, 105, 225), "d": (105, 60, 170)}),
+    "ender_pearl": (["................", "................", ".....dddddd.....", "....dmmmmmmd....",
+                     "...dmlllmmmmd...", "..dmlwlmmmmmmd..", "..dmllmmmmmmmd..", "..dmmmmmGGmmmd..",
+                     "..dmmmmGggGmmd..", "..dmmmmGggGmmd..", "..dmmmmmGGmmmd..", "...dmmmmmmmmd...",
+                     "....dmmmmmmd....", ".....dddddd.....", "................", "................"],
+                    {"d": (12, 60, 52), "m": (30, 110, 96), "l": (80, 170, 150), "w": (200, 245, 235),
+                     "G": (20, 80, 70), "g": (8, 40, 34)}),
+    "gold_ingot": (["................", "................", "................", "................",
+                    "........dddddd..", "......ddYYYYYYd.", "....ddYWWYYYYod.", "..ddYYYYYYYYood.",
+                    ".dYYYYYYYYYoodd.", ".dooooooooooodd..", ".dooooooooodd...", "..ddddddddd.....",
+                    "................", "................", "................", "................"],
+                   {"d": (120, 80, 10), "Y": (250, 210, 60), "W": (255, 250, 200), "o": (215, 160, 30)}),
+    "gold_nugget": (["................", "................", "................", "................",
+                     "................", "......dd........", ".....dYYd..dd...", "....dYWYod.dYd..",
+                     "....dYYood.dod..", ".....ddd...dd...", "......dd........", ".....dYYd.......",
+                     ".....dYod.......", "......dd........", "................", "................"],
+                    {"d": (120, 80, 10), "Y": (250, 210, 60), "W": (255, 250, 200), "o": (215, 160, 30)}),
+    "paper": (["................", "................", "...dddddddddd...", "...dwwwwwwwwwd..",
+               "...dwggggggwwd..", "...dwwwwwwwwwd..", "...dwggggggggd..", "...dwwwwwwwwwd..",
+               "...dwgggggwwwd..", "...dwwwwwwwwwd..", "...dwggggggggd..", "...dwwwwwwwwwd..",
+               "...dwwwwwwwwwd..", "...ddddddddddd..", "................", "................"],
+              {"d": (150, 140, 120), "w": (240, 238, 228), "g": (200, 195, 180)}),
+    "ink_sac": (["................", "................", "......dddd......", ".....dmmmmd.....",
+                 "....dmllmmmd....", "....dmlmmmmd....", "...dmmmmmmmmd...", "..dmmmmmmmmmmd..",
+                 "..dmmmmmmmmmmd..", "..dmmmmmmmmmmd..", "...dmmmmmmmmd...", "....dmd.dmdmd...",
+                 "....dd..dd.dd...", "................", "................", "................"],
+                {"d": (15, 15, 22), "m": (45, 45, 62), "l": (100, 100, 125)}),
+    "feather": (["............ww..", "...........wWw..", "..........wWwg..", ".........wWwwg..",
+                 "........wWwwg...", ".......wWwwg....", "......wWwwg.....", ".....wWwwg......",
+                 "....wWwwg.......", "...wWwgg........", "...wWg..........", "..gW............",
+                 ".gg.............", "gg..............", "g...............", "................"],
+                {"w": (245, 245, 250), "W": (210, 210, 222), "g": (150, 150, 165)}),
+    "flint": (["................", "................", "......dd........", ".....dmmd.......",
+               "....dmllmd......", "....dmlmmmd.....", "...dmmmmmmd.....", "...dmmmmmmmd....",
+               "..dmmmmmmmmd....", "..dmmmmmmmmmd...", "...dmmmmmmmd....", "....ddmmmdd.....",
+               "......ddd.......", "................", "................", "................"],
+              {"d": (25, 25, 28), "m": (70, 70, 76), "l": (125, 125, 135)}),
 }
 
-CUSTOM = {  # code -> (sprite name or model, label)
-    "warp_stone": ("item:warp_stone", "Warp Stone"),
-    "waystone": ("model:block/waystone_stone", "Waystone"),
-    "dormant_shard": ("item:dormant_shard", "Dormant Shard"),
+def sprite(name, px):
+    rows, pal = SPRITES[name]
+    img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    for y, row in enumerate(rows):
+        for x, ch in enumerate(row):
+            if ch in pal:
+                img.putpixel((x, y), pal[ch] + (255,))
+    return img.resize((px, px), Image.NEAREST)
+
+def block_icon(texture_img, px, half=False):
+    """Small isometric cube made from one of this pack's own textures."""
+    global _tex_cache
+    canvas = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
+    s = 2.0
+    c30, s30 = math.cos(math.radians(30)), math.sin(math.radians(30))
+    ox, oy = 32, 50
+    h = 8 if half else 16
+    def P(x, y, z):
+        x -= 8; z -= 8
+        return (ox + (x - z) * c30 * s, oy + (x + z) * s30 * s - y * s)
+    t = texture_img
+    o = P(0, h, 16); a = P(16, h, 16); b = P(0, 0, 16)
+    draw_face(canvas, t, o, (a[0]-o[0], a[1]-o[1]), (b[0]-o[0], b[1]-o[1]), 0.8)
+    o = P(16, h, 16); a = P(16, h, 0); b = P(16, 0, 16)
+    draw_face(canvas, t, o, (a[0]-o[0], a[1]-o[1]), (b[0]-o[0], b[1]-o[1]), 0.62)
+    o = P(0, h, 0); a = P(16, h, 0); b = P(0, h, 16)
+    draw_face(canvas, t, o, (a[0]-o[0], a[1]-o[1]), (b[0]-o[0], b[1]-o[1]), 1.0)
+    bb = canvas.getbbox()
+    c = canvas.crop(bb)
+    c.thumbnail((px, px), Image.NEAREST)
+    out = Image.new("RGBA", (px, px), (0, 0, 0, 0))
+    out.alpha_composite(c, ((px - c.width) // 2, (px - c.height) // 2))
+    return out
+
+def green_tex(seed):
+    img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    import random as _r
+    r = _r.Random(seed)
+    for y in range(16):
+        for x in range(16):
+            g = r.choice([(70, 120, 45), (88, 140, 52), (58, 100, 38), (100, 150, 60)])
+            img.putpixel((x, y), g + (255,))
+    return img
+
+INGREDIENTS = {  # code -> (display name, icon factory)
+    "stone_bricks": ("Stone Bricks", lambda px: block_icon(tex("waystones:block/stone_bricks"), px)),
+    "style_block": ("Style block", lambda px: block_icon(tex("waystones:block/sandy_bricks"), px)),
+    "slab": ("Stone Brick Slab", lambda px: block_icon(tex("waystones:block/stone_bricks"), px, half=True)),
+    "deepslate": ("Deepslate", lambda px: block_icon(tex("waystones:block/deepslate_body"), px)),
+    "vines": ("Vines or Moss Block", lambda px: block_icon(green_tex(5), px)),
+    "material": ("Material*", lambda px: sprite("amethyst", px)),
+    "amethyst": ("Amethyst Shard", lambda px: sprite("amethyst", px)),
+    "ender_pearl": ("Ender Pearl", lambda px: sprite("ender_pearl", px)),
+    "gold_ingot": ("Gold Ingot", lambda px: sprite("gold_ingot", px)),
+    "gold_nugget": ("Gold Nugget", lambda px: sprite("gold_nugget", px)),
+    "paper": ("Paper", lambda px: sprite("paper", px)),
+    "ink_sac": ("Ink Sac", lambda px: sprite("ink_sac", px)),
+    "feather": ("Feather", lambda px: sprite("feather", px)),
+    "flint": ("Flint", lambda px: sprite("flint", px)),
+    "warp_stone": ("Warp Stone", lambda px: tex("waystones:item/warp_stone").resize((px, px), Image.NEAREST)),
+    "waystone": ("Waystone", lambda px: _model_icon("block/waystone_stone", px)),
 }
 
-def tile(code, size):
-    t = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    if code in CUSTOM:
-        kind, ref = CUSTOM[code][0].split(":", 1)
-        if kind == "item":
-            spr = tex(f"waystones:item/{ref}").resize((size - 12, size - 12), Image.NEAREST)
-        else:
-            spr = render_iso(ref, scale=4)
-            spr.thumbnail((size - 10, size - 10), Image.NEAREST)
-        t.alpha_composite(spr, ((size - spr.width) // 2, (size - spr.height) // 2))
-        return t
-    label, colour = VANILLA[code]
-    d = ImageDraw.Draw(t)
-    d.rounded_rectangle((5, 5, size - 6, size - 6), radius=8, fill=colour + (255,))
-    lum = 0.3 * colour[0] + 0.59 * colour[1] + 0.11 * colour[2]
-    fg = (20, 20, 24) if lum > 140 else (245, 245, 250)
-    f = font(int(size * 0.17), "Medium")
-    lines = label.split("\n")
-    lh = f.size + 2
-    y = size / 2 - lh * len(lines) / 2
-    for line in lines:
-        w = d.textlength(line, font=f)
-        d.text((size / 2 - w / 2, y), line, font=f, fill=fg)
-        y += lh
-    return t
+def _model_icon(model, px):
+    r = render_iso(model, scale=3)
+    r.thumbnail((px, px), Image.NEAREST)
+    out = Image.new("RGBA", (px, px), (0, 0, 0, 0))
+    out.alpha_composite(r, ((px - r.width) // 2, (px - r.height) // 2))
+    return out
 
-def result_image(kind, ref, size):
+def result_icon(kind, ref, px):
     if kind == "item":
-        return tex(f"waystones:item/{ref}").resize((size, size), Image.NEAREST)
-    r = render_iso(ref, scale=5)
-    r.thumbnail((size, int(size * 1.4)), Image.NEAREST)
-    return r
+        return tex(f"waystones:item/{ref}").resize((px, px), Image.NEAREST)
+    return _model_icon(ref, px)
 
 def recipe_card(title, grid, legend, result, count=1, note=None, shapeless=False):
-    S = 78                 # slot size
-    W, H = 760, 364
-    card = Image.new("RGBA", (W, H), PANEL + (255,))
+    W, H = 262, 96
+    card = gui_panel(W, H)
     d = ImageDraw.Draw(card)
-    d.text((24, 16), title, font=font(26, "Bold"), fill=TEXT)
-    if note:
-        d.text((24, 52), note, font=font(17), fill=MUTED)
-    gx, gy = 24, 88
+    d.text((8 * U, 6 * U), title, font=pix(27, True), fill=GUI_TEXT)
+    gx, gy = 8, 22
     if shapeless:
         cells = [c for row in grid for c in row if c != " "]
-        grid = [cells[i:i + 3] + [" "] * (3 - len(cells[i:i + 3])) for i in range(0, 9, 3)]
+        grid = ["".join(cells[i:i + 3]).ljust(3) for i in range(0, 9, 3)]
+    used = []
     for r in range(3):
         for c in range(3):
-            x, y = gx + c * (S + 6), gy + r * (S + 6)
-            d.rounded_rectangle((x, y, x + S, y + S), radius=8, fill=SLOT, outline=SLOT_EDGE, width=2)
+            gui_slot(card, gx + c * 18, gy + r * 18)
             ch = grid[r][c] if r < len(grid) and c < len(grid[r]) else " "
             if ch != " ":
-                card.alpha_composite(tile(legend[ch], S), (x, y))
-    ax = gx + 3 * (S + 6) + 26
-    ay = gy + 1 * (S + 6) + S // 2
-    d.polygon([(ax, ay - 18), (ax + 46, ay), (ax, ay + 18)], fill=ACCENT)
-    rx = ax + 76
-    res = result_image(*result, 120)
-    card.alpha_composite(res, (rx + (150 - res.width) // 2, ay - res.height // 2))
+                code = legend[ch]
+                if code not in used:
+                    used.append(code)
+                card.alpha_composite(INGREDIENTS[code][1](16 * U), ((gx + c * 18 + 1) * U, (gy + r * 18 + 1) * U))
+    gui_arrow(card, gx + 54 + 6, gy + 19)
+    rx, ry = gx + 54 + 32, gy + 14
+    gui_slot(card, rx, ry, 26)
+    card.alpha_composite(result_icon(*result, 16 * U), ((rx + 5) * U, (ry + 5) * U))
     if count > 1:
-        d.text((rx + 120, ay + 24), f"×{count}", font=font(30, "Bold"), fill=TEXT)
+        shadow_text(d, ((rx + 15) * U, (ry + 15) * U), str(count), pix(27, True))
+    # legend
+    lx = rx + 34
+    ly = gy
+    f = pix(18)
+    for code in used:
+        card.alpha_composite(INGREDIENTS[code][1](8 * U), (lx * U, ly * U))
+        d.text(((lx + 11) * U, (ly - 0.5) * U), INGREDIENTS[code][0], font=f, fill=GUI_TEXT)
+        ly += 10
     if shapeless:
-        d.text((rx + 30, ay + 80), "shapeless", font=font(16), fill=MUTED)
+        d.text(((lx) * U, (ly + 1) * U), "(any arrangement)", font=pix(16), fill=(110, 110, 110))
+        ly += 9
+    if note:
+        d.text((8 * U, (H - 11) * U), note, font=pix(16), fill=(90, 90, 90))
     return card
 
+def mc_background(W, H):
+    img = Image.new("RGBA", (W, H), (0, 0, 0, 255))
+    import random as _r
+    r = _r.Random(3)
+    tile = Image.new("RGBA", (16, 16))
+    for y in range(16):
+        for x in range(16):
+            v = r.choice([38, 42, 46, 50, 34])
+            tile.putpixel((x, y), (v, v - 4, v - 8, 255))
+    tile = tile.resize((64, 64), Image.NEAREST)
+    for y in range(0, H, 64):
+        for x in range(0, W, 64):
+            img.paste(tile, (x, y))
+    return img
+
 def sheet(cards, title, subtitle, path, cols=2):
-    pad = 30
+    pad = 24
     cw, ch = cards[0].size
     rows = (len(cards) + cols - 1) // cols
     W = pad + cols * (cw + pad)
-    H = 150 + rows * (ch + pad)
-    img = Image.new("RGBA", (W, H), BG + (255,))
+    H = 130 + rows * (ch + pad)
+    img = mc_background(W, H)
     d = ImageDraw.Draw(img)
-    d.text((pad, 34), title, font=font(44, "Bold"), fill=TEXT)
-    d.text((pad + 2, 92), subtitle, font=font(21), fill=MUTED)
+    shadow_text(d, (pad, 26), title, pix(46, True), off=4)
+    shadow_text(d, (pad + 2, 84), subtitle, pix(22), fill=(200, 200, 200), off=2)
     for i, c in enumerate(cards):
-        img.alpha_composite(c, (pad + (i % cols) * (cw + pad), 150 + (i // cols) * (ch + pad)))
+        img.alpha_composite(c, (pad + (i % cols) * (cw + pad), 130 + (i // cols) * (ch + pad)))
     img.convert("RGB").save(path)
 
 def make_recipes():
@@ -288,26 +425,26 @@ def make_recipes():
                     {"A": "amethyst", "P": "ender_pearl", "G": "gold_ingot"}, ("item", "warp_stone"),
                     note="Needed for every waystone-type block"),
         recipe_card("Waystone", [" B ", "BWB", "BBB"], {"B": "style_block", "W": "warp_stone"},
-                    ("model", "block/waystone_stone"),
-                    note="Style block decides the look (stone bricks, sandstone, mud bricks...)"),
+                    ("model", "block/waystone_sandy"),
+                    note="The style block sets the look: stone bricks, sandstone, mud bricks..."),
         recipe_card("Mossy Waystone", ["WVVV"], {"W": "waystone", "V": "vines"},
-                    ("model", "block/waystone_mossy"), shapeless=True, note="Or craft it with mossy stone bricks"),
+                    ("model", "block/waystone_mossy"), shapeless=True, note="Or use mossy stone bricks as the style block"),
         recipe_card("Sharestone", ["BCB", "BWB", "BCB"],
                     {"B": "stone_bricks", "C": "material", "W": "warp_stone"}, ("model", "block/sharestone_amethyst"),
-                    note="*Amethyst, copper, diamond, emerald, gold, lapis, prismarine or redstone"),
-        recipe_card("Portstone (plain)", ["LBL", " W ", "BLB"],
+                    note="*Amethyst, copper, diamond, emerald, gold, lapis, prismarine, redstone"),
+        recipe_card("Portstone", ["LBL", " W ", "BLB"],
                     {"L": "slab", "B": "stone_bricks", "W": "warp_stone"}, ("model", "block/portstone_plain"),
                     note="One-way: warps to your activated waystones"),
-        recipe_card("Portstone (material)", ["CLB", "LWB", "CLB"],
+        recipe_card("Material Portstone", ["CLB", "LWB", "CLB"],
                     {"C": "material", "L": "slab", "B": "stone_bricks", "W": "warp_stone"},
-                    ("model", "block/portstone_diamond"), note="One-way: warps to that material's sharestones"),
+                    ("model", "block/portstone_amethyst"), note="One-way: warps to that material's sharestones"),
         recipe_card("Warp Plate", ["BAB", "AFA", "BAB"],
                     {"B": "stone_bricks", "A": "amethyst", "F": "flint"}, ("model", "block/warp_plate"),
                     note="Pops out an Attuned Shard when placed"),
         recipe_card("Scoped Warp Stone", ["WCCCC"], {"W": "warp_stone", "C": "material"},
-                    ("item", "warp_stone_emerald"), shapeless=True, note="Warp stone + 4 of a material"),
+                    ("item", "warp_stone_amethyst"), shapeless=True, note="*Any of the 8 sharestone materials"),
     ]
-    sheet(blocks, "Recipes — blocks", "Everything shows up in the recipe book once you join.",
+    sheet(blocks, "Recipes - Blocks", "All recipes also show in the in-game recipe book",
           os.path.join(OUT, "recipes-blocks.png"))
 
     items = [
@@ -319,7 +456,7 @@ def make_recipes():
                     note="One trip to any activated waystone"),
         recipe_card("Unbound Scroll", ["G G", "PFP", " P "],
                     {"G": "gold_nugget", "P": "paper", "F": "feather"}, ("item", "unbound_scroll"), 3,
-                    note="Use on a waystone / sharestone / plate to bind it"),
+                    note="Use it on a waystone to make a Bound Scroll"),
         recipe_card("Portal Scroll", ["AIA", "PEP", "APA"],
                     {"A": "amethyst", "I": "ink_sac", "P": "paper", "E": "ender_pearl"}, ("item", "portal_scroll"), 3,
                     note="Opens a 5-minute portal anyone can use"),
@@ -330,58 +467,62 @@ def make_recipes():
                     ("item", "dormant_shard"), note="Put in a warp plate to get an Attuned Shard"),
         recipe_card("Epitaph", ["NAN", "NDN", "NAN"],
                     {"N": "gold_nugget", "A": "amethyst", "D": "deepslate"}, ("item", "epitaph"),
-                    note="Keep it on you — leaves a memorial when you die"),
+                    note="Keep it on you - leaves a memorial when you die"),
     ]
-    sheet(items, "Recipes — items", "Scrolls are consumed when used; warp stones lose durability.",
+    sheet(items, "Recipes - Items", "Scrolls are used up; warp stones lose durability",
           os.path.join(OUT, "recipes-items.png"))
 
 
 # ── how to get things ──────────────────────────────────────────────
 
 def make_how_to():
-    W, H = 1560, 1060
-    img = Image.new("RGBA", (W, H), BG + (255,))
+    W, H = 1560, 1110
+    img = mc_background(W, H)
     d = ImageDraw.Draw(img)
-    d.text((40, 34), "Finding & getting everything", font=font(44, "Bold"), fill=TEXT)
-    d.text((42, 92), "Waystones generate in the world; everything else is crafted or made from other items.",
-           font=font(21), fill=MUTED)
+    shadow_text(d, (40, 30), "Finding & getting everything", pix(46, True), off=4)
+    shadow_text(d, (42, 90), "Waystones generate in new terrain - everything else is crafted", pix(22), fill=(200, 200, 200))
 
     panels = [
         ("block/waystone_mossy", "Wild waystones",
-         ["About one every 25 chunks", "Styled to the biome (mossy in", "jungles, sandy in deserts...)",
-          "Sit on a small stone platform", "Only in newly generated terrain"]),
+         ["About one every 25 chunks", "Styled to the biome", "(mossy, sandy, ...)",
+          "On a small stone platform", "Only in new terrain"]),
         ("block/waystone_stone", "Village waystones",
-         ["About half of villages", "(most, on FREQUENT)", "Desert villages get sandy ones",
-          "Near the village centre", "Random place names"]),
+         ["About half of villages", "(most on FREQUENT)", "Desert villages get", "sandy ones",
+          "Near the village centre"]),
         ("block/waystone_blackstone", "Nether & End",
-         ["Wild waystones also spawn", "in the Nether (blackstone)", "and the End (ender style)",
-          "Warping between dimensions", "costs 27 XP points"]),
+         ["Wild ones spawn in the", "Nether (blackstone) and", "the End (ender style)",
+          "Cross-dimension warps", "cost 27 XP points"]),
     ]
-    pw, ph = 480, 470
+    pw, ph = 160, 168  # GUI units
     for i, (mdl, title, lines) in enumerate(panels):
-        x, y = 40 + i * (pw + 20), 150
-        d.rounded_rectangle((x, y, x + pw, y + ph), radius=18, fill=PANEL)
+        x, y = 40 + i * (pw * U + 20), 140
+        panel = gui_panel(pw, ph)
+        pd = ImageDraw.Draw(panel)
         r = render_iso(mdl, scale=5)
-        r = r.resize((int(r.width * 230 / r.height), 230), Image.NEAREST)
-        rx = x + (pw - r.width) // 2
-        img.alpha_composite(r, (rx, y + 24))
-        d.text((x + 28, y + 272), title, font=font(28, "Bold"), fill=ACCENT)
+        r = r.resize((int(r.width * 210 / r.height), 210), Image.NEAREST)
+        panel.alpha_composite(r, ((pw * U - r.width) // 2, 20))
+        pd.text((10 * U, 82 * U), title, font=pix(26, True), fill=GUI_TEXT)
         for j, line in enumerate(lines):
-            d.text((x + 28, y + 318 + j * 28), line, font=font(20), fill=TEXT if j % 2 == 0 or True else MUTED)
+            pd.text((10 * U, (96 + j * 13) * U), line, font=pix(19), fill=GUI_TEXT)
+        img.alpha_composite(panel, (x, y))
 
     rows = [
-        ("warp_stone", "Every block and item", "is craftable — see the recipe images"),
+        ("warp_stone", "Every block and item", "is craftable - see the recipe images"),
         ("unbound_scroll", "Bound Scroll", "right-click a waystone, sharestone or warp plate with an Unbound Scroll"),
-        ("attuned_shard", "Attuned Shard", "placing a warp plate gives one; or put a Dormant Shard in a plate's menu"),
+        ("attuned_shard", "Attuned Shard", "placing a warp plate gives one; or put a Dormant Shard in a plate"),
         ("twinbound_feather", "Bound feathers", "two players hold right-click facing each other until the hearts finish"),
-        ("epitaph", "Fleeting Memorial", "die with an Epitaph in your inventory; pick it from any waystone menu"),
+        ("epitaph", "Fleeting Memorial", "die with an Epitaph on you, then pick it from any waystone menu"),
     ]
-    y = 650
+    panel = gui_panel(500, 136)
+    pd = ImageDraw.Draw(panel)
+    y = 8
     for name, title, desc in rows:
-        img.alpha_composite(item_sprite(name, 56), (52, y))
-        d.text((130, y + 2), title, font=font(24, "Bold"), fill=TEXT)
-        d.text((130, y + 32), desc, font=font(19), fill=MUTED)
-        y += 80
+        gui_slot(panel, 8, y)
+        panel.alpha_composite(item_sprite(name, 16 * U), (9 * U, (y + 1) * U))
+        pd.text((32 * U, (y + 1) * U), title, font=pix(22, True), fill=GUI_TEXT)
+        pd.text((32 * U, (y + 10) * U), desc, font=pix(17), fill=(80, 80, 80))
+        y += 25
+    img.alpha_composite(panel, (40, 690))
     img.convert("RGB").save(os.path.join(OUT, "how-to-get.png"))
 
 
