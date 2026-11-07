@@ -60,6 +60,16 @@ public final class PackServer {
                 return;
             }
 
+            // Default: the bundled pack is published on GitHub at this release's tag, so every player can
+            // download it no matter how the server is networked (Docker, TrueNAS apps, tunnels...).
+            if (!custom.exists() && !s.packSelfHost) {
+                String version = plugin.getDescription().getVersion();
+                url = "https://raw.githubusercontent.com/cashroy/PaperWaystones/v" + version
+                        + "/src/main/resources/waystones-pack.zip";
+                plugin.getLogger().info("Players will download the resource pack from " + url);
+                return;
+            }
+
             server = HttpServer.create(new InetSocketAddress(s.packPort), 0);
             server.createContext("/", exchange -> {
                 try {

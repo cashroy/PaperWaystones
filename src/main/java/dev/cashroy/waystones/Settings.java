@@ -44,6 +44,7 @@ public final class Settings {
     public List<String> namePresets;
 
     public boolean packEnabled;
+    public boolean packSelfHost;
     public int packPort;
     public String packHost;
     public String packExternalUrl;
@@ -94,6 +95,7 @@ public final class Settings {
         s.namePresets = c.getStringList("world-gen.name-generation-presets");
 
         s.packEnabled = c.getBoolean("resource-pack.enabled", true);
+        s.packSelfHost = c.getBoolean("resource-pack.self-host", false);
         s.packPort = c.getInt("resource-pack.port", 8164);
         s.packHost = c.getString("resource-pack.public-host", "");
         s.packExternalUrl = c.getString("resource-pack.external-url", "");

@@ -74,7 +74,11 @@ world-gen:
 
 resource-pack:
   enabled: true
-  # The plugin serves the pack itself on this port. Players must be able to reach it.
+  # By default players download the pack from GitHub (matched to this plugin version), which works
+  # behind Docker, TrueNAS apps and tunnels. Set self-host: true to serve it from this server instead
+  # (needed only if you put an edited pack in plugins/PaperWaystones/custom-pack.zip).
+  self-host: false
+  # Port and address for self-hosting. Players must be able to reach it.
   port: 8164
   # Address players use to reach the server (LAN IP, ZeroTier IP, domain...).
   # Leave blank to use the server's own IP from server.properties.
