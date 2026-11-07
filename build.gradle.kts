@@ -6,9 +6,10 @@ group = "dev.cashroy"
 // CI passes the tag version (v1.2.3 -> 1.2.3) via RELEASE_VERSION.
 version = System.getenv("RELEASE_VERSION")?.removePrefix("v")?.takeIf { it.isNotBlank() } ?: "1.0.0"
 
-// Paper 26.x publishes versions like 26.3.0.build.12-stable.
-// "26.3.+" picks the newest 26.3 build; override with -PpaperVersion=... if you want a fixed one.
-val paperVersion: String = (findProperty("paperVersion") as String?) ?: "26.3.+"
+// Built against the oldest supported API (1.21.4) for Java 21, so one jar runs on 1.21.4 through 26.x.
+// CI also compiles against the newest Paper (-PpaperVersion=26.3.+ -PjavaRelease=25) to catch API breaks.
+val paperVersion: String = (findProperty("paperVersion") as String?) ?: "1.21.4-R0.1-SNAPSHOT"
+val javaRelease: Int = ((findProperty("javaRelease") as String?) ?: "21").toInt()
 
 repositories {
     mavenCentral()
@@ -20,12 +21,12 @@ dependencies {
 }
 
 java {
-    toolchain.languageVersion.set(JavaLanguageVersion.of(25))
+    toolchain.languageVersion.set(JavaLanguageVersion.of(javaRelease))
 }
 
 tasks.withType<JavaCompile> {
     options.encoding = "UTF-8"
-    options.release.set(25)
+    options.release.set(javaRelease)
 }
 
 tasks.processResources {

@@ -1,7 +1,7 @@
 name: PaperWaystones
 version: '${version}'
 main: dev.cashroy.waystones.WaystonesPlugin
-api-version: '26.1'
+api-version: '1.21.4'
 author: cashroy
 description: Paper Waystones — waystones, sharestones, portstones, warp plates, scrolls and more — server-side, with a custom resource pack.
 commands:

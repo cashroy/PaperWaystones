@@ -554,7 +554,10 @@ def main():
 
     save_json(os.path.join(OUT_DIR, "pack.mcmeta"), {"pack": {
         "description": "Waystones server plugin pack",
-        "min_format": 84,
+        # pack_format/supported_formats for 1.21.4-1.21.8 clients, min/max_format for 1.21.9+ and 26.x
+        "pack_format": 46,
+        "supported_formats": [46, 999],
+        "min_format": 46,
         "max_format": 999,
     }})
     icon = Image.new("RGBA", (64, 64))

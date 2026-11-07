@@ -246,8 +246,8 @@ public final class Items {
     // ── recipes ──────────────────────────────────────────────
 
     public void registerRecipes() {
-        // Any plain warp stone counts, even a worn one.
-        RecipeChoice warp = RecipeChoice.predicateChoice(it -> "warp_stone".equals(idOf(it)), create("warp_stone"));
+        // Any plain warp stone counts, even a worn one (on servers that support predicate choices).
+        RecipeChoice warp = choice(it -> "warp_stone".equals(idOf(it)), create("warp_stone"));
 
         for (Style s : Catalog.STYLES.values()) {
             ShapedRecipe r = shaped("waystone/" + s.id(), 1, " B ", "BWB", "BBB");
@@ -256,7 +256,7 @@ public final class Items {
             add(r);
         }
         // Mossy from a plain waystone + vines or moss
-        RecipeChoice plainStone = RecipeChoice.predicateChoice(
+        RecipeChoice plainStone = choice(
                 it -> "waystone/stone".equals(idOf(it)) && uuidTag(it, keyStored) == null, create("waystone/stone"));
         ShapelessRecipe mossyVine = shapeless("waystone/mossy", "mossy_vine");
         mossyVine.addIngredient(plainStone);
@@ -348,6 +348,21 @@ public final class Items {
         epitaph.setIngredient('A', Material.AMETHYST_SHARD);
         epitaph.setIngredient('D', Material.DEEPSLATE);
         add(epitaph);
+    }
+
+    /**
+     * RecipeChoice.predicateChoice only exists on Paper 26.2+. Use it there (so worn warp stones still
+     * work as ingredients); on older servers fall back to an exact match of a fresh item.
+     */
+    @SuppressWarnings("removal")
+    private static RecipeChoice choice(java.util.function.Predicate<ItemStack> test, ItemStack example) {
+        try {
+            java.lang.reflect.Method m = RecipeChoice.class.getMethod("predicateChoice",
+                    java.util.function.Predicate.class, ItemStack.class);
+            return (RecipeChoice) m.invoke(null, test, example);
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            return new RecipeChoice.ExactChoice(example);
+        }
     }
 
     private ShapedRecipe shaped(String resultId, int amount, String... rows) {
