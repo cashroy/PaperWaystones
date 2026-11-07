@@ -4,7 +4,7 @@
 
 > Independent fan project inspired by BlayTheNinth's [Waystones](https://modrinth.com/mod/waystones) mod. Not affiliated with it, and no code or art is copied from it.
 
-![All the blocks](https://cdn.modrinth.com/data/16iFCfUA/images/5b58eeadada206bb93a63266d74c7eca6e5e3ffc.png)
+![All the blocks](https://cdn.modrinth.com/data/16iFCfUA/images/f37b4f20f0a58e4f1a3b93c863ddcab6a93276a4.png)
 
 ## Blocks
 - **Waystones** in 10 styles (stone, sandy, mossy, deepslate, ender, black, nether, purpur, prismarine, muddy). Right-click to activate, right-click again to travel. Shift-right-click to rename, set visibility (activation / team / global) and add modifiers.
@@ -24,7 +24,7 @@
 - **Village waystones** appear in about half of villages (most of them on the `FREQUENT` setting).
 - They only appear in **newly generated chunks**, so explore new land to find them. For areas you've already explored, an admin can add them with `/waystones place <x> <y> <z> <type> <name>`, e.g. `/waystones place ~ ~ ~ waystone/stone Spawn`.
 
-![Finding and getting everything](https://cdn.modrinth.com/data/16iFCfUA/images/95cd2839d635ac6c139c00443c4f4e3f3a095078.png)
+![Finding and getting everything](https://cdn.modrinth.com/data/16iFCfUA/images/9003280069878f5fd2ac34ca0ea482ba0175b897.png)
 
 ## Crafting
 Every block and item is craftable, and all recipes show in the in-game recipe book. A few things are made from other items instead:
@@ -35,8 +35,8 @@ Every block and item is craftable, and all recipes show in the in-game recipe bo
 
 Items don't currently appear in loot chests.
 
-![Block recipes](https://cdn.modrinth.com/data/16iFCfUA/images/8981b465825c75f888fb855e9a0f2481d5a40fbf.png)
-![Item recipes](https://cdn.modrinth.com/data/16iFCfUA/images/f72b3935bbe9f7402b1b7e64625cf077707a1d95.png)
+![Block recipes](https://cdn.modrinth.com/data/16iFCfUA/images/62526fb746084c6a670cd81652b9e894e9ffc6f9.png)
+![Item recipes](https://cdn.modrinth.com/data/16iFCfUA/images/c87f49f2e3194474ba2b7fc8855e943eddf854f1.png)
 
 ## Also
 - XP costs per block travelled and across dimensions, cooldowns, warp modifiers (blaze powder, ink sac, feather, magma cream, milk, diamond potency...)
