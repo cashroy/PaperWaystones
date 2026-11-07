@@ -28,6 +28,23 @@ Not included: the JourneyMap / Dynmap / BlueMap integrations, the spider-eye mod
 matters for single-use shards, which this version doesn't have), and the mod's Shogi rule engine —
 the common settings are in `config.yml` instead.
 
+## Finding and crafting
+
+![Blocks](docs/blocks.png)
+
+- **Wild waystones** generate about every 25 chunks (overworld, Nether and End), on a small platform
+  styled to the biome. **Village waystones** appear in about half of villages (most on `FREQUENT`).
+- They only appear in **newly generated chunks**. For areas players have already explored, an admin can
+  add them with `/waystones place <x> <y> <z> <type> <name>` (e.g. `/waystones place ~ ~ ~ waystone/stone Spawn`).
+- **Everything is craftable** (recipes below, also in the in-game recipe book). Bound Scrolls come from
+  using an Unbound Scroll on a waystone, Attuned Shards from placing a warp plate or putting a Dormant
+  Shard in one, and Fleeting Memorials from dying with an Epitaph.
+- Items don't appear in loot chests.
+
+![How to get things](docs/how-to-get.png)
+![Block recipes](docs/recipes-blocks.png)
+![Item recipes](docs/recipes-items.png)
+
 ## Building
 
 Push to GitHub and the included Actions workflow builds `PaperWaystones-<version>.jar` (download it from the
