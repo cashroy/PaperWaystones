@@ -101,7 +101,9 @@ public final class PackServer {
         Settings s = plugin.cfg();
         String prompt = s.packPrompt == null || s.packPrompt.isBlank() ? null : s.packPrompt;
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            if (p.isOnline()) p.setResourcePack(PACK_ID, url, sha1, prompt, s.packRequired);
+            // addResourcePack layers our pack on top of the server's and other plugins' packs.
+            // (setResourcePack would replace all of them.) Re-adding the same ID only updates ours.
+            if (p.isOnline()) p.addResourcePack(PACK_ID, url, sha1, prompt, s.packRequired);
         }, 20L);
     }
 
